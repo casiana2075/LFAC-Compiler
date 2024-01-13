@@ -12,8 +12,8 @@
 
 "begin_class"                        {return BGINCLASS;}
 "end_class"                          {return ENDCLASS;}
-"begin_progr"                        {return BGINPROGR;}
-"end_progr"                          {return ENDPROGR;}
+"begin_main"                        {return BGINMAIN;}
+"end_main"                          {return ENDMAIN;}
 "begin_global"                       {return BGINGLOBAL;}
 "end_global"                         {return ENDGLOBAL;}
 "begin_functions"                    {return BGINFUNC;}
