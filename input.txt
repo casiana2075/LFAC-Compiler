@@ -1,0 +1,47 @@
+begin_class
+    clasă Point{
+        int x;
+        int y;
+        int getter(int z) { }
+    };   
+end_class
+
+begin_global
+    int x;
+    float z;
+    bool Bool;
+end_global
+
+begin_functions
+    int f(int x,float y) {
+        int z;
+        char character;
+        if( x < y ){
+            z := x;
+        }else {
+            z := y;    
+        };
+    };
+end_functions
+
+
+begin_progr
+    const int a := 3;
+    float b;
+    b := 2.3;
+    Bool := fls ;
+
+    Eval( (10+2) + (4*2) );  
+    TypeOf ( a + 101 );
+
+    if( a >' 2 ){
+        Bool := tr;
+    }
+    else {
+        Bool := fls;
+    }
+
+    int arr[3] := {1, 2, 3};
+    arr[1] := 45;
+    x := 345;
+end_progr
