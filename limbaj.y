@@ -60,7 +60,7 @@ bool isBoolean(const std::string& str) {
 struct Node *nod;
 }
 
-%token           BGINPROGR ENDPROGR ASSIGN BGINCLASS ENDCLASS CONST IF ELSE WHILE BGINGLOBAL ENDGLOBAL BGINFUNC ENDFUNC EVAL
+%token           BGINMAIN ENDMAIN ASSIGN BGINCLASS ENDCLASS CONST IF ELSE WHILE BGINGLOBAL ENDGLOBAL BGINFUNC ENDFUNC EVAL
 %token           LT LE GT GE EQ NEQ AND OR NOT 
 %token<string>   ID TYPE TYPEOF
 %token<num>      INT 
@@ -171,7 +171,7 @@ list_param : param
             | list_param ','  param 
             ;        
 
-main : BGINPROGR list ENDPROGR  
+main : BGINMAIN list ENDMAIN 
      ;
      
      
@@ -645,3 +645,4 @@ int main(int argc, char** argv)
      yyin=fopen(argv[1],"r");
      yyparse();
 } 
+
