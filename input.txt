@@ -13,7 +13,7 @@ begin_global
 end_global
 
 begin_functions
-    int f(int x,float y) {
+    int foo(int x,float y) {
         int z;
         char character;
         if( x < y ){
@@ -25,11 +25,12 @@ begin_functions
 end_functions
 
 
-begin_progr
+begin_main
     const int a := 3;
     float b;
     b := 2.3;
-    Bool := fls ;
+    Bool := fls;
+    foo (x, y);
 
     Eval( (10+2) + (4*2) );  
     TypeOf ( a + 101 );
@@ -44,4 +45,4 @@ begin_progr
     int arr[3] := {1, 2, 3};
     arr[1] := 45;
     x := 345;
-end_progr
+end_main
