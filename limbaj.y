@@ -9,7 +9,7 @@
 #include "AST.h"
 #include "IdList.h"
 #include "limbaj.tab.h"
-
+#include "FunctionList.h"
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
@@ -22,6 +22,11 @@ using namespace std;
 
 class IdList ids;
 class AST ast;
+class FunctionList fs;
+vector<ParamInfo> globalParams;
+std::string scope; // Declare scope here
+std::string altscope;
+
 
 bool isInteger(const std::string& str) {
     try {
@@ -48,6 +53,19 @@ bool isFloat(const std::string& str) {
 bool isBoolean(const std::string& str) {
     return (str == "true" || str == "false");
 }
+
+void printClassDefined(const string& className) {
+    cout << "Class " << className << " defined." << endl;
+}
+
+void printFieldAdded(const string& fieldType, const string& fieldName) {
+    cout << "Field " << fieldName << " of type " << fieldType << " added to class." << endl;
+}
+
+void printMethodAdded(const string& methodName, const string& returnType) {
+    cout << "Method " << methodName << " of return type " << returnType << " added to class." << endl;
+}
+
 
 %}
 
@@ -88,30 +106,47 @@ struct Node *nod;
 progr: user_defined_data_types global_variables functions main { 
                                                                     cout <<"The program is correct!\n";
                                                                     ids.printVars();
+                                                                    fs.printFunctions();
                                                                };
 
 user_defined_data_types:
-                       | BGINCLASS class_list ENDCLASS
-                       ;
+    | BGINCLASS class_list ENDCLASS
+    ;
 
 class_list :
-                | class_list clasa 
-                ;
+    | class_list clasa 
+    | clasa
+    ;
 
 clasa: CLASS ID '{' list_class_fields methods'}' ';' 
-           ;
+    {
+        printClassDefined($2);
+    }
+    ;
 
-list_class_fields :  list_class_fields param ';'
-                   |
-                   ; 
+list_class_fields :  
+     list_class_fields param ';'
+    | 
+    ;
 
-methods: TYPE ID '(' list_param ')' '{' list1 '}' ;     //int get_doors() { }
-       |
-       ;
-       
-param : TYPE ID 
-      ;  
+methods: 
+    | methods method
+    | method
+    ;
 
+method: TYPE ID '(' list_param ')' '{' list1 '}' 
+    {
+        printMethodAdded($2, $1);
+    }
+    ;
+
+param : TYPE ID
+{
+    ParamInfo param;
+    param.type = $1;
+    param.name = $2;
+    globalParams.push_back(param);
+};
 global_variables:
                 | BGINGLOBAL global_variables_list ENDGLOBAL
                 ;
@@ -136,9 +171,40 @@ functions_list :
 	      |  functions_list decl_func 
 	      ;
 
-decl_func  : TYPE ID '(' list_param ')' '{' list1 '}'      //int cmmdc(int param) { }
-           |TYPE ID '(' ')' '{' list1 '}'                 //int cmmdc( ) { }
+ /*duplica parametrii*/
+decl_func  : 
+       TYPE ID '(' list_param ')' '{' list1 '}' {
+        altscope = scope;
+        scope= $2;
+        if (fs.existsFunction(scope.c_str())) {
+            yyerror("Function redefinition");
+        } else {
+            FunctionInfo funcInfo;
+            funcInfo.name = $2;
+            funcInfo.returnType = $1;
+            funcInfo.parameters = globalParams;
+            fs.addFunction(funcInfo);
+        }
+        scope = altscope; // Restore previous scope
+        globalParams.clear(); // Clear the parameters
+    }
+                 
+       |TYPE ID '(' ')' '{' list1 '}' {
+        altscope = scope; // Save current scope
+        scope = $2; // Update scope to function name
+
+        if (fs.existsFunction(scope.c_str())) {
+            yyerror("Function redefinition");
+        } else {
+            FunctionInfo funcInfo;
+            funcInfo.name = $2;
+            funcInfo.returnType = $1;
+            fs.addFunction(funcInfo);
+        }
+        scope = altscope; // Restore previous scope
+    } 
            ;
+
            
 list1: list1 statement1 ';'
      | list1 IF '(' expr ')' '{' list1 '}'
@@ -171,9 +237,12 @@ op : ID
    | BOOL
    ;
 
-list_param : param
-            | list_param ','  param 
-            ;        
+list_param
+    : param { 
+ ParamInfo param;        globalParams.push_back(param); }
+    | list_param ',' param { ParamInfo param;
+    globalParams.push_back(param); }
+    ;
 
 main : BGINMAIN list ENDMAIN 
      ;
@@ -577,63 +646,160 @@ expression : expression '+' expression
                             }
                         $$ = new Node { $1, $3, "/",$1->type }; 
                         ast.AddNode("/",$1,$3,$1->type);}
-           | expression '^' expression { 
-                    if($1->type=="bool"||$3->type=="bool"){yyerror("Cannot perform mathematical operations on type 'bool'");}
-                    if($1->type!=$3->type){string err="Operands have different types! '"+$1->type+"' ^ '"+$3->type+"'";yyerror(err.c_str());}
-                    $$ = new Node{$1, $3, "^",$1->type}; 
-                    ast.AddNode("^",$1,$3,$1->type);}
-           | expression AND expression{
-                    if($1->type=="int"||$1->type=="float"||$3->type=="int"||$3->type=="float"){
-                         string err="Operation && only supports bool operands ! '"+$1->type+"' && '"+$3->type+"'";yyerror(err.c_str());}
-                    $$ = new Node{$1, $3,"&&",$1->type}; 
-                    ast.AddNode("&&",$1,$3,$1->type); }
-           | expression OR expression{
-                    if($1->type=="int"||$1->type=="float"||$3->type=="int"||$3->type=="float"){
-                         string err="Operation || only supports bool operands ! '"+$1->type+"' || '"+$3->type+"'";yyerror(err.c_str());}
-                    $$ = new Node{$1, $3,"||",$1->type}; 
-                    ast.AddNode("||",$1,$3,$1->type);}
-           | NOT expression{
-                    if($2->type=="int"||$2->type=="float"){
-                         string err="Operation ! only supports bool operand! !'"+$2->type+"''";yyerror(err.c_str());}
-                    $$ = new Node{$2, NULL,"!",$2->type}; 
-                    ast.AddNode("!",$2,NULL,$2->type); }
-           | expression LT expression { 
-                    if($1->type=="bool"||$3->type=="bool"){yyerror("Cannot perform mathematical operations on type 'bool'");}
-                    if($1->type!=$3->type){string err="Operands have different types! '"+$1->type+"' < '"+$3->type+"'";yyerror(err.c_str());}
-                    $$ = new Node{$1, $3, "<","bool"}; 
-                    ast.AddNode("<",$1,$3,"bool");}
-           | expression LE expression { 
-                    if($1->type=="bool"||$3->type=="bool"){yyerror("Cannot perform mathematical operations on type 'bool'");}
-                    if($1->type!=$3->type){string err="Operands have different types! '"+$1->type+"' <= '"+$3->type+"'";yyerror(err.c_str());}
-                    $$ = new Node{$1, $3, "<=","bool"}; 
-                    ast.AddNode("<=",$1,$3,"bool");}
-           | expression GT expression { 
-                    if($1->type=="bool"||$3->type=="bool"){yyerror("Cannot perform mathematical operations on type 'bool'");}
-                    if($1->type!=$3->type){string err="Operands have different types! '"+$1->type+"' > '"+$3->type+"'";yyerror(err.c_str());}
-                    $$ = new Node{$1, $3, ">","bool"}; 
-                    ast.AddNode(">",$1,$3,"bool");}
-           | expression GE expression { 
-                    if($1->type=="bool"||$3->type=="bool"){yyerror("Cannot perform mathematical operations on type 'bool'");}
-                    if($1->type!=$3->type){string err="Operands have different types! '"+$1->type+"' >= '"+$3->type+"'";yyerror(err.c_str());}
-                    $$ = new Node{$1, $3, ">=","bool"}; 
-                    ast.AddNode(">=",$1,$3,"bool");}
-           | expression EQ expression { 
-                    if($1->type=="bool"||$3->type=="bool"){yyerror("Cannot perform mathematical operations on type 'bool'");}
-                    if($1->type!=$3->type){string err="Operands have different types! '"+$1->type+"' == '"+$3->type+"'";yyerror(err.c_str());}
-                    $$ = new Node{$1, $3, "==","bool"}; 
-                    ast.AddNode("==",$1,$3,"bool");}
-           | expression NEQ expression { 
-                    if($1->type=="bool"||$3->type=="bool"){yyerror("Cannot perform mathematical operations on type 'bool'");}
-                    if($1->type!=$3->type){string err="Operands have different types! '"+$1->type+"' != '"+$3->type+"'";yyerror(err.c_str());}
-                    $$ = new Node{$1, $3, "!=","bool"}; 
-                    ast.AddNode("!=",$1,$3,"bool");}
-           | '(' expression ')'{$$=$2;}
-           | INT   { $$ = new Node{NULL, NULL, to_string($1),"int"}; ast.AddNode(to_string($1),NULL,NULL,"int");}
-           | FLOAT {$$=new Node{NULL,NULL,to_string($1),"float"};ast.AddNode(to_string($1),NULL,NULL,"float");}
-           | BOOL {$$=new Node{NULL,NULL,$1?"true":"false","bool"};ast.AddNode($1?"true":"false",NULL,NULL,"bool");}
-           | ID { if(!ids.existsVar($1)) {string err="Variable '"+string($1)+"' was not declared!";yyerror(err.c_str());}
-               $$=new Node{NULL,NULL,ids.get_val($1),ids.TypeOf($1)}; ast.AddNode(ids.get_val($1),NULL,NULL,ids.TypeOf($1));}
+          | expression '^' expression 
+                   { 
+                        if($1->type=="bool"||$3->type=="bool")
+                            {
+                                yyerror("Cannot perform mathematical operations on type 'bool'");
+                            }
+                        if($1->type!=$3->type)
+                            {
+                                string err="Operands have different types! '"+$1->type+"' ^ '"+$3->type+"'";
+                                yyerror(err.c_str());
+                            }
+                        $$ = new Node{$1, $3, "^",$1->type}; 
+                        ast.AddNode("^",$1,$3,$1->type);
+                    }
+           | expression AND expression
+                   {
+                        if($1->type=="int"||$1->type=="float"||$3->type=="int"||$3->type=="float")
+                            {
+                                string err="Operation && only supports bool operands ! '"+$1->type+"' && '"+$3->type+"'";
+                                yyerror(err.c_str());
+                            }
+                            $$ = new Node{$1, $3,"&&",$1->type}; 
+                            ast.AddNode("&&",$1,$3,$1->type);
+                    }
+           | expression OR expression
+                   {
+                         if($1->type=="int"||$1->type=="float"||$3->type=="int"||$3->type=="float")
+                            {
+                                string err="Operation || only supports bool operands ! '"+$1->type+"' || '"+$3->type+"'";
+                                yyerror(err.c_str());
+                            }
+                            $$ = new Node{$1, $3,"||",$1->type}; 
+                            ast.AddNode("||",$1,$3,$1->type);
+                    }
+           | NOT expression
+                    {
+                        if($2->type=="int"||$2->type=="float")
+                            {
+                                string err="Operation ! only supports bool operand! !'"+$2->type+"''";
+                                yyerror(err.c_str());
+                            }
+                            $$ = new Node{$2, NULL,"!",$2->type}; 
+                            ast.AddNode("!",$2,NULL,$2->type); }
+           | expression LT expression
+                    { 
+                        if($1->type=="bool"||$3->type=="bool")
+                            {
+                                yyerror("Cannot perform mathematical operations on type 'bool'");
+                            }
+                        if($1->type!=$3->type)
+                            { 
+                                string err="Operands have different types! '"+$1->type+"' < '"+$3->type+"'";
+                                yyerror(err.c_str());
+                            }
+                            $$ = new Node{$1, $3, "<","bool"}; 
+                            ast.AddNode("<",$1,$3,"bool");}
+           | expression LE expression 
+                    { 
+                        if($1->type=="bool"||$3->type=="bool")
+                            { 
+                                yyerror("Cannot perform mathematical operations on type 'bool'");
+                            }
+                        if($1->type!=$3->type)
+                            {
+                                string err="Operands have different types! '"+$1->type+"' <= '"+$3->type+"'";
+                                yyerror(err.c_str());
+                            }
+                            $$ = new Node{$1, $3, "<=","bool"}; 
+                            ast.AddNode("<=",$1,$3,"bool");}
+           | expression GT expression 
+                    { 
+                        if($1->type=="bool"||$3->type=="bool")
+                        {
+                            yyerror("Cannot perform mathematical operations on type 'bool'");
+                        }
+                        if($1->type!=$3->type)
+                        {
+                            string err="Operands have different types! '"+$1->type+"' > '"+$3->type+"'";
+                            yyerror(err.c_str());
+                        }
+                        $$ = new Node{$1, $3, ">","bool"}; 
+                        ast.AddNode(">",$1,$3,"bool");}
+           | expression GE expression 
+                    { 
+                        if($1->type=="bool"||$3->type=="bool")
+                        {
+                            yyerror("Cannot perform mathematical operations on type 'bool'");
+                        }
+                        if($1->type!=$3->type)
+                        {
+                            string err="Operands have different types! '"+$1->type+"' >= '"+$3->type+"'";
+                            yyerror(err.c_str());
+                        }
+                        $$ = new Node{$1, $3, ">=","bool"}; 
+                        ast.AddNode(">=",$1,$3,"bool");}
+           | expression EQ expression 
+                    { 
+                        if($1->type=="bool"||$3->type=="bool")
+                        {
+                            yyerror("Cannot perform mathematical operations on type 'bool'");
+                        }
+                        if($1->type!=$3->type)
+                        {
+                            string err="Operands have different types! '"+$1->type+"' == '"+$3->type+"'";
+                            yyerror(err.c_str());
+                        }
+                        $$ = new Node{$1, $3, "==","bool"}; 
+                        ast.AddNode("==",$1,$3,"bool");
+                    }
+           | expression NEQ expression 
+                    { 
+                        if($1->type=="bool"||$3->type=="bool")
+                        {
+                            yyerror("Cannot perform mathematical operations on type 'bool'");
+                        }
+                        if($1->type!=$3->type)
+                        {
+                            string err="Operands have different types! '"+$1->type+"' != '"+$3->type+"'";
+                            yyerror(err.c_str());
+                        }
+                        $$ = new Node{$1, $3, "!=","bool"}; 
+                        ast.AddNode("!=",$1,$3,"bool");}
+           | '(' expression ')'
+                        {
+                            $$=$2;
+                        }
+           | INT   
+                        { 
+                            $$ = new Node{NULL, NULL, to_string($1),"int"}; 
+                            ast.AddNode(to_string($1),NULL,NULL,"int");
+                        }
+           | FLOAT 
+                        {
+                            $$=new Node{NULL,NULL,to_string($1),"float"};
+                            ast.AddNode(to_string($1),NULL,NULL,"float");
+                        }
+           | BOOL      
+                        {
+                            $$=new Node{NULL,NULL,$1?"true":"false","bool"};
+                            ast.AddNode($1?"true":"false",NULL,NULL,"bool");
+                        }
+           | ID
+                        {
+                        if(!ids.existsVar($1))
+                            {
+                                string err="Variable '"+string($1)+"' was not declared!";
+                                yyerror(err.c_str());
+                            }
+                        $$=new Node{NULL,NULL,ids.get_val($1),ids.TypeOf($1)}; 
+                        ast.AddNode(ids.get_val($1),NULL,NULL,ids.TypeOf($1));
+                        }
            ;
+
+
 
 
 %%
