@@ -1,10 +1,12 @@
 begin_class
-    clasă Point{
-        int x;
-        int y;
-        int getter(int z) { }
-    };   
-end_class
+ clasă NULL {
+
+
+ };
+ end_class
+
+
+
 
 begin_global
     int x;
@@ -13,29 +15,21 @@ begin_global
 end_global
 
 begin_functions
-    int foo(int x,float y) {
-        int z;
-        char character;
-        if( x <' y ){
-            z := x;
-        }else {
-            z := y;    
-        }
-    }
+   int foo(int x, int y) {}
+   int max(int a, int b) {}
+   int alba() {}
+    int alba() {}
 end_functions
-
 
 begin_main
     const int a := 3;
     float b;
     b := 2.3;
     Bool := fls;
-    foo (x, y);
 
     Eval( (10+2) + (4*2) );  
     TypeOf ( a + 101 );
     TypeOf ( Bool &&' tr );
-
     if( a >' 2 ){
         Bool := tr;
     }
