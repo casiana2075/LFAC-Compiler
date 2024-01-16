@@ -32,9 +32,9 @@
 \"[0-9a-zA-Z ]*\"                    {yylval.string = strdup(yytext); return STRING; }
 ['][0-9a-zA-Z][']                    {yylval.chr= yytext[1]; return CHAR; }
 [a-zA-Z][a-zA-Z0-9]*                 {yylval.string = strdup(yytext); return ID;}
-":="                                 {return ASSIGN;}
+":="             {return ASSIGN;}
 "=='"            { return EQ; }
-"!="            { return NEQ;}
+"!="             { return NEQ;}
 ">'"             { return GT; }
 "<'"             { return LT; }
 ">='"            { return GE; }
