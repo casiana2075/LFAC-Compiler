@@ -53,8 +53,8 @@ bool isBoolean(const std::string& str) {
 
 %union {
     int num;
-    float num_cu_pct;
-    bool bul;
+    float num_with_dot;
+    bool bolean;
     char chr;
     char* string;
 struct Node *nod;
@@ -64,8 +64,8 @@ struct Node *nod;
 %token           LT LE GT GE EQ NEQ AND OR NOT 
 %token<string>   ID TYPE TYPEOF
 %token<num>      INT 
-%token<num_cu_pct> FLOAT   
-%token<bul>        BOOL 
+%token<num_with_dot> FLOAT   
+%token<bolean>        BOOL 
 %token<chr>        CHAR 
 %token<string>     STRING CLASS
 
