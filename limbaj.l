@@ -27,8 +27,8 @@
 "if"                                 {return IF;}
 "else"                               {return ELSE;}
 "while"                              {return WHILE;}
-"tr"                               {yylval.bul = true; return BOOL; }
-"fls"                              {yylval.bul = false; return BOOL; }
+"tr"                               {yylval.bolean = true; return BOOL; }
+"fls"                              {yylval.bolean = false; return BOOL; }
 \"[0-9a-zA-Z ]*\"                    {yylval.string = strdup(yytext); return STRING; }
 ['][0-9a-zA-Z][']                    {yylval.chr= yytext[1]; return CHAR; }
 [a-zA-Z][a-zA-Z0-9]*                 {yylval.string = strdup(yytext); return ID;}
@@ -42,8 +42,8 @@
 "&&'"            { return AND;}
 "||'"            { return OR; }
 "!'"             { return NOT;}
-[1-9]+[1-9]*[.][0-9]+[0-9]*         {yylval.num_cu_pct = atof(yytext);return FLOAT;}
-[0].[0-9]+[0-9]*                    {yylval.num_cu_pct = atof(yytext);return FLOAT;}
+[1-9]+[1-9]*[.][0-9]+[0-9]*         {yylval.num_with_dot= atof(yytext);return FLOAT;}
+[0].[0-9]+[0-9]*                    {yylval.num_with_dot = atof(yytext);return FLOAT;}
 [1-9][0-9]*                         {yylval.num = atoi(yytext); return INT; }
 0                                   {yylval.num = 0; return INT; } 
 [ \t]                               ;
