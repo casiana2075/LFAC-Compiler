@@ -1,5 +1,6 @@
 #include "FunctionList.h"
 #include <fstream>
+#include <string.h>
 #include <iostream>
 
 using namespace std;
@@ -9,6 +10,12 @@ void FunctionList::addFunction(FunctionInfo funcInfo)
         functions.push_back(funcInfo);
     }
 
+void FunctionList::getParam( const char *type, const char*name)
+{  
+    FunctionInfo funcInfo;
+    funcInfo.param_type = string(type);
+    funcInfo.param_name = string(name);
+    }
 
 bool FunctionList::existsFunction(const char *name)
 {
@@ -32,11 +39,11 @@ void FunctionList::printFunctions()
        for (auto &func : functions)
         {
             file << "Function name: " << func.name << " , Return type: " << func.returnType<<" " << ", Scope: " << func.scope<<endl;
-            file << "Parameters: " << endl;
+            /* file << "Parameters: " << endl;
             for (auto &param : func.parameters)
             {
-                file << "Type: " << param.type << ", Name: " << param.name << endl;
-            }
+                file << "Type: " << param.first << ", Name: " << param.second << endl;
+            } */
         }
         file.close();
     }
