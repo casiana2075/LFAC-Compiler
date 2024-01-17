@@ -8,8 +8,9 @@
 #include <stdexcept>
 #include "AST.h"
 #include "IdList.h"
-#include "limbaj.tab.h"
 #include "FunctionList.h"
+#include "limbaj.tab.h"
+
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
@@ -23,9 +24,8 @@ using namespace std;
 class IdList ids;
 class AST ast;
 class FunctionList fs;
-vector<ParamInfo> globalParams;
-std::string scope; // Declare scope here
-std::string altscope;
+string scope;
+string altscope;
 
 
 bool isInteger(const std::string& str) {
@@ -54,19 +54,6 @@ bool isBoolean(const std::string& str) {
     return (str == "true" || str == "false");
 }
 
-void printClassDefined(const string& className) {
-    cout << "Class " << className << " defined." << endl;
-}
-
-void printFieldAdded(const string& fieldType, const string& fieldName) {
-    cout << "Field " << fieldName << " of type " << fieldType << " added to class." << endl;
-}
-
-void printMethodAdded(const string& methodName, const string& returnType) {
-    cout << "Method " << methodName << " of return type " << returnType << " added to class." << endl;
-}
-
-
 %}
 
 %union {
@@ -78,7 +65,7 @@ void printMethodAdded(const string& methodName, const string& returnType) {
 struct Node *nod;
 }
 
-%token           BGINMAIN ENDMAIN ASSIGN BGINCLASS ENDCLASS CONST IF ELSE WHILE BGINGLOBAL ENDGLOBAL BGINFUNC ENDFUNC EVAL
+%token           BGINMAIN ENDMAIN ASSIGN BGINCLASS ENDCLASS CONST IF ELSE WHILE FOR BGINGLOBAL ENDGLOBAL BGINFUNC ENDFUNC EVAL
 %token           LT LE GT GE EQ NEQ AND OR NOT 
 %token<string>   ID TYPE TYPEOF
 %token<num>      INT 
@@ -104,49 +91,33 @@ struct Node *nod;
 
 %%
 progr: user_defined_data_types global_variables functions main { 
-                                                                    cout <<"The program is correct!\n";
+                                                                    cout <<"The program works!! (ง ͡ʘ ͜ʖ ͡ʘ)ง \n";
                                                                     ids.printVars();
                                                                     fs.printFunctions();
                                                                };
 
 user_defined_data_types:
-    | BGINCLASS class_list ENDCLASS
-    ;
+                       | BGINCLASS class_list ENDCLASS
+                       ;
 
 class_list :
-    | class_list clasa 
-    | clasa
-    ;
+                | class_list clasa 
+                ;
 
 clasa: CLASS ID '{' list_class_fields methods'}' ';' 
-    {
-        printClassDefined($2);
-    }
-    ;
+           ;
 
-list_class_fields :  
-     list_class_fields param ';'
-    | 
-    ;
+list_class_fields :  list_class_fields param ';'
+                   |
+                   ; 
 
-methods: 
-    | methods method
-    | method
-    ;
+methods: TYPE ID '(' list_param ')' '{' list1 '}' ;     //int get_doors() { }
+       |
+       ;
+       
+param : TYPE ID 
+      ;  
 
-method: TYPE ID '(' list_param ')' '{' list1 '}' 
-    {
-        printMethodAdded($2, $1);
-    }
-    ;
-
-param : TYPE ID
-{
-    ParamInfo param;
-    param.type = $1;
-    param.name = $2;
-    globalParams.push_back(param);
-};
 global_variables:
                 | BGINGLOBAL global_variables_list ENDGLOBAL
                 ;
@@ -171,45 +142,43 @@ functions_list :
 	      |  functions_list decl_func 
 	      ;
 
- /*duplica parametrii*/
-decl_func  : 
-       TYPE ID '(' list_param ')' '{' list1 '}' {
-        altscope = scope;
-        scope= $2;
-        if (fs.existsFunction(scope.c_str())) {
-            yyerror("Function redefinition");
-        } else {
-            FunctionInfo funcInfo;
-            funcInfo.name = $2;
-            funcInfo.returnType = $1;
-            funcInfo.parameters = globalParams;
-            fs.addFunction(funcInfo);
-        }
-        scope = altscope; // Restore previous scope
-        globalParams.clear(); // Clear the parameters
-    }
-                 
-       |TYPE ID '(' ')' '{' list1 '}' {
-        altscope = scope; // Save current scope
-        scope = $2; // Update scope to function name
+decl_func  : TYPE ID '(' list_param ')' '{' list1 '}'      //int cmmdc(int param) { }
+              {
+                altscope = scope; 
+                scope = $2; 
+            
+                if (fs.existsFunction(scope.c_str())) {
+                    yyerror("Function redefinition");
+                } else {
+                    FunctionInfo funcInfo;
+                    funcInfo.name = $2;
+                    funcInfo.returnType = $1;
+                    fs.addFunction(funcInfo);
+                 }
+                scope = altscope; // restore
+              } 
+           |TYPE ID '(' ')' '{' list1 '}'                 //int cmmdc( ) { }
+              {
+                altscope = scope; 
+                scope = $2; 
 
-        if (fs.existsFunction(scope.c_str())) {
-            yyerror("Function redefinition");
-        } else {
-            FunctionInfo funcInfo;
-            funcInfo.name = $2;
-            funcInfo.returnType = $1;
-            fs.addFunction(funcInfo);
-        }
-        scope = altscope; // Restore previous scope
-    } 
+                if (fs.existsFunction(scope.c_str())) {
+                    yyerror("Function redefinition");
+                } else {
+                    FunctionInfo funcInfo;
+                    funcInfo.name = $2;
+                    funcInfo.returnType = $1;
+                    fs.addFunction(funcInfo);
+                 }
+                scope = altscope; // restore
+              } 
            ;
-
            
 list1: list1 statement1 ';'
      | list1 IF '(' expr ')' '{' list1 '}'
      | list1 IF '(' expr ')' '{' list1 '}' ELSE '{' list1 '}' 
      | list1 WHILE '(' expr ')' '{' list '}'
+     | list1 FOR '(' expr_for ')' '{' list '}'
      |
      ;
 
@@ -231,18 +200,21 @@ expr: op GT op
     | op NEQ op
     ;
 
+expr_for: ID ASSIGN INT ';' ID LT INT ';' ID '+'
+    | ID ASSIGN INT ';' ID LE INT ';' ID '+'
+    | ID ASSIGN INT ';' ID GT INT ';' ID '-'
+    | ID ASSIGN INT ';' ID GE INT ';' ID '-'
+    ;
+
 op : ID 
    | INT 
    | FLOAT 
    | BOOL
    ;
 
-list_param
-    : param { 
- ParamInfo param;        globalParams.push_back(param); }
-    | list_param ',' param { ParamInfo param;
-    globalParams.push_back(param); }
-    ;
+list_param : param
+            | list_param ','  param 
+            ;        
 
 main : BGINMAIN list ENDMAIN 
      ;
@@ -267,6 +239,7 @@ list : list statement ';'
                                                                  yyerror("'while' accepts only boolean expressions");
                                                             }
                                                   }
+     | list FOR '(' expr_for ')' '{' list '}' 
      | 
      ;
      
@@ -646,7 +619,7 @@ expression : expression '+' expression
                             }
                         $$ = new Node { $1, $3, "/",$1->type }; 
                         ast.AddNode("/",$1,$3,$1->type);}
-          | expression '^' expression 
+           | expression '^' expression 
                    { 
                         if($1->type=="bool"||$3->type=="bool")
                             {
