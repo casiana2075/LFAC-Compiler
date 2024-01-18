@@ -63,6 +63,8 @@ bool isBoolean(const std::string& str) {
     char chr;
     char* string;
 struct Node *nod;
+struct ParamInfo *parametru;
+struct FunctionInfo *functie;
 }
 
 %token           BGINMAIN ENDMAIN ASSIGN BGINCLASS ENDCLASS CONST IF ELSE WHILE FOR BGINGLOBAL ENDGLOBAL BGINFUNC ENDFUNC EVAL
@@ -76,6 +78,8 @@ struct Node *nod;
 
 %type<nod> eval expression
 %type<string> array_list
+%type<parametru> param param_call
+%type<functie> list_param list_param_call
 
 %left OR
 %left AND
@@ -107,16 +111,20 @@ class_list :
 clasa: CLASS ID '{' list_class_fields methods'}' ';' 
            ;
 
-list_class_fields :  list_class_fields param ';'
+list_class_fields :  list_class_fields param_class ';'
                    |
                    ; 
 
-methods: TYPE ID '(' list_param ')' '{' list1 '}' ;     //int get_doors() { }
+param_class: TYPE ID
+           ;
+
+methods: TYPE ID '(' list_param_class ')' '{' list1 '}' ;     //int get_doors() { }
        |
        ;
        
-param : TYPE ID 
-      ;  
+list_param_class : param_class
+                | list_param_class ',' param_class
+                ;
 
 global_variables:
                 | BGINGLOBAL global_variables_list ENDGLOBAL
@@ -153,6 +161,8 @@ decl_func  : TYPE ID '(' list_param ')' '{' list1 '}'      //int cmmdc(int param
                     FunctionInfo funcInfo;
                     funcInfo.name = $2;
                     funcInfo.returnType = $1;
+                    funcInfo.parameters= $4->parameters;
+                    
                     fs.addFunction(funcInfo);
                  }
                 scope = altscope; // restore
@@ -173,6 +183,23 @@ decl_func  : TYPE ID '(' list_param ')' '{' list1 '}'      //int cmmdc(int param
                 scope = altscope; // restore
               } 
            ;
+
+list_param : param    {
+                         $$=new FunctionInfo;
+                         $$->parameters.push_back(*$1);
+                      }
+            | list_param ','  param {
+                                    $$->parameters.push_back(*$3);
+                                    }
+            ;        
+
+param : TYPE ID {
+                     $$ = new ParamInfo;    
+                     $$->type = $1;
+                     $$->name = $2;
+                }
+      ;  
+
            
 list1: list1 statement1 ';'
      | list1 IF '(' expr ')' '{' list1 '}'
@@ -212,10 +239,6 @@ op : ID
    | BOOL
    ;
 
-list_param : param
-            | list_param ','  param 
-            ;        
-
 main : BGINMAIN list ENDMAIN 
      ;
      
@@ -247,7 +270,23 @@ statement: declarations
          | assignments
          | statement_eval
          | TYPEOF statement_typeof
-         | ID '(' list_param_call ')'
+        |ID '(' list_param_call ')' {
+            FunctionInfo *func = fs.getFunction($1); // presupunem că există o metodă getFunction care returnează informații despre funcția cu numele dat
+            if (func == nullptr) {
+                yyerror(("Undefined function: " + std::string($1)).c_str());
+            } else {
+                if (func->parameters.size() != $3->parameters.size()) {
+                    yyerror(("Incorrect number of arguments for function: " + std::string($1)).c_str());
+                } else {
+                    for (size_t i = 0; i < func->parameters.size(); ++i) {
+                        if (func->parameters[i].type != $3->parameters[i].type) {
+                            yyerror(("Argument type mismatch in function " + std::string($1) + " for parameter " + std::to_string(i+1) + ": expected " + func->parameters[i].type + ", got " + $3->parameters[i].type).c_str());
+                        }
+                    }
+                }
+            }
+        }
+         // de comparat vectorul din function table cu vectorul din $3->parameters si de vazut daca pe aceleasi pozitii sunt aceleasi tipuri
          ;
 
 statement_eval: eval {
@@ -275,14 +314,22 @@ statement_typeof: expression {
                              }
                              ;
                              
-list_param_call: param_call ',' list_param_call
-               | param_call
+list_param_call: list_param_call  ',' param_call{
+                                    $$->parameters.push_back(*$3);
+                                    }
+               | param_call {
+                         $$=new FunctionInfo;
+                         $$->parameters.push_back(*$1);
+                      }
                ;
 
-param_call: INT 
-          | FLOAT  
-          | BOOL 
-          | ID
+param_call: INT     { $$=new ParamInfo; $$->type="int"; }
+          | FLOAT  { $$=new ParamInfo; $$->type="float"; }
+          | BOOL  { $$=new ParamInfo; $$->type="bool"; }
+          | ID      { 
+            if(!ids.existsVar($1)){string err="Variable '"+string($1)+"' was not declared!"; yyerror(err.c_str());}
+            else {$$=new ParamInfo; $$->type=ids.TypeOf($1);}       
+                    }
           ;
 
 declarations:TYPE ID {   //int x; float y; bool z; char c; string str;
