@@ -5,17 +5,25 @@
 
 using namespace std;
 
-void FunctionList::addFunction(FunctionInfo funcInfo)
-{  funcInfo.scope = "GLOBAL";
-        functions.push_back(funcInfo);
+FunctionInfo* FunctionList::getFunction(const char *name)
+{
+    string funcName = string(name);
+    for (auto &func : functions)
+    {
+        if (func.name == funcName)
+        {
+            return &func;  // Returnează un pointer către funcția găsită
+        }
     }
+    return nullptr;  // Returnează nullptr dacă funcția nu este găsită
+}
 
-void FunctionList::getParam( const char *type, const char*name)
-{  
-    FunctionInfo funcInfo;
-    funcInfo.param_type = string(type);
-    funcInfo.param_name = string(name);
-    }
+
+void FunctionList::addFunction(FunctionInfo funcInfo)
+{
+    funcInfo.scope = "GLOBAL";
+    functions.push_back(funcInfo);
+}
 
 bool FunctionList::existsFunction(const char *name)
 {
@@ -36,15 +44,17 @@ void FunctionList::printFunctions()
 
     if (file.is_open())
     {
-       for (auto &func : functions)
+        for (auto &func : functions)
         {
-            file << "Function name: " << func.name << " , Return type: " << func.returnType<<" " << ", Scope: " << func.scope<<endl;
-            /* file << "Parameters: " << endl;
+            file << "Function name: " << func.name << " , Return type: " << func.returnType << " "
+                 << ", Scope: " << func.scope<<", Parameters: ";
             for (auto &param : func.parameters)
             {
-                file << "Type: " << param.first << ", Name: " << param.second << endl;
-            } */
+                file << "type: " << param.type << ", name: " << param.name;
+            }
+            file << endl;
         }
+
         file.close();
     }
     else
@@ -57,4 +67,3 @@ FunctionList::~FunctionList()
 {
     functions.clear();
 }
-
