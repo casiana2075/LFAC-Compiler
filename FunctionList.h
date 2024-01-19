@@ -3,6 +3,7 @@
 #include <string>
 
 using namespace std;
+
  struct ParamInfo
 {
     string type;
@@ -19,6 +20,13 @@ struct FunctionInfo
     vector<ParamInfo> parameters;
 };
 
+struct ClassInstance {
+    string className;
+    string instanceName;
+};
+
+extern vector<ClassInstance> classInstances;
+
 class FunctionList
 {
     vector<FunctionInfo> functions;
@@ -28,6 +36,7 @@ public:
     void addFunction(FunctionInfo funcInfo);
     bool existsFunction(const char *name);
     void printFunctions();
-   
     ~FunctionList();
+    const vector<FunctionInfo>& getFunctions() const {
+        return functions;}
 };
