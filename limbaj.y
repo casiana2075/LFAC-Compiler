@@ -54,20 +54,6 @@ bool isBoolean(const std::string& str) {
     return (str == "true" || str == "false");
 }
 
-bool callMethod(string instanceName, string methodName) {
-    for (auto &instance : classInstances) {
-        if (instance.instanceName == instanceName) {
-            for (auto &func : fs.getFunctions()) { 
-                if (func.className == instance.className && func.name == methodName) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-
 %}
 
 %union {
@@ -88,9 +74,9 @@ struct FunctionInfo *metoda;
 %token<string>   ID TYPE TYPEOF
 %token<num>      INT 
 %token<num_with_dot> FLOAT   
-%token<bolean>       BOOL 
+%token<bolean>        BOOL 
 %token<chr>        CHAR 
-%token<string>     STRING CLASS
+%token<string>     STRING CLASS OBJECT
 
 %type<nod> eval expression
 %type<string> array_list
@@ -99,6 +85,8 @@ struct FunctionInfo *metoda;
 %type<metoda> list_param_class
 %type<parametru> param_class
 %type <num> nume
+%type <string> class_instance_declaration
+
 
 
 %left OR
@@ -128,7 +116,7 @@ class_list :
                 | class_list clasa 
                 ;
 
-clasa: CLASS nume  '{' list_class_fields methods'}' ';' 
+clasa: CLASS nume   '{' list_class_fields methods'}' ';' 
 
 nume: ID  { scope = $1 ;}
            ;
@@ -157,7 +145,7 @@ methods: TYPE ID '(' list_param_class ')' '{' list1 '}' {
     FunctionInfo funcInfo;
     funcInfo.name = $2;
     funcInfo.returnType = $1;
-    funcInfo.isMethod = !scope.empty(); // Aceasta este o metodă
+    funcInfo.isMethod = !scope.empty(); // aceasta este o metodă
     funcInfo.className = scope; // Numele curent al clasei
     funcInfo.parameters= $4->parameters;
     funcInfo.parameters= $4->parameters;
@@ -165,43 +153,13 @@ methods: TYPE ID '(' list_param_class ')' '{' list1 '}' {
                
     fs.addFunction(funcInfo);
 }    //int get_doors() { }
-       |TYPE ID '('  ')' '{' list1 '}' {
-        altscope = scope; 
-                scope = $2; 
-
-                if (fs.existsFunction(scope.c_str())) {
-                    yyerror("Function redefinition");
-                } else {
-                    FunctionInfo funcInfo;
-                    funcInfo.name = $2;
-                    funcInfo.returnType = $1;
-                    funcInfo.isMethod = !scope.empty(); // Aceasta este o metodă
-                    funcInfo.className = scope; 
-                    fs.addFunction(funcInfo);
-                 }
-                scope = altscope; 
-       }
+       |
        ;
 
-class_instance: ID ID { //Point punct
-    ClassInstance instance;
-    if ($1 )
-    instance.className = $1;
-    instance.instanceName = $2;  
-    classInstances.push_back(instance);
-}
-;
-
-
-/* method_access: ID '.' ID '(' ')' ';' { 
-  if (!callMethod($1, $3)) {
-        yyerror(("Method " + string($3) + " not found in class instance " + string($1)).c_str());
-    }
-}
-; */
-
-
-       
+class_instance_declaration: ID ID {
+    string className = $1;
+    string instanceName = $2;
+};
 
 global_variables:
                 | BGINGLOBAL global_variables_list ENDGLOBAL
@@ -217,6 +175,8 @@ decl:  TYPE ID {
                         ids.addVar($1,$2,NULL,NULL,NULL,false);
                     }
                }
+       | class_instance_declaration
+    
        ;
        
 functions:
@@ -347,10 +307,9 @@ list : list statement ';'
 statement: declarations
          | assignments
          | statement_eval
-         | class_instance
          | TYPEOF statement_typeof
-         | ID '(' list_param_call ')' {
-            FunctionInfo *func = fs.getFunction($1); 
+         |ID '(' list_param_call ')' {
+            FunctionInfo *func = fs.getFunction($1); // presupunem că există o metodă getFunction care returnează informații despre funcția cu numele dat
             if (func == nullptr) {
                 yyerror(("Undefined function: " + std::string($1)).c_str());
             } else {
@@ -365,6 +324,7 @@ statement: declarations
                 }
             }
         }
+         // de comparat vectorul din function table cu vectorul din $3->parameters si de vazut daca pe aceleasi pozitii sunt aceleasi tipuri
          ;
 
 statement_eval: eval {
@@ -375,6 +335,8 @@ statement_eval: eval {
 statement_typeof: expression {  
                                 cout << "TypeOf value: ";
                                 string resultValue = ast.evaluateTree();
+
+                                // Assuming your evaluateTree() function returns a string representation of the result
 
                                 if (isInteger(resultValue)) {
                                     cout << "Integer" << endl;
@@ -391,20 +353,20 @@ statement_typeof: expression {
                              ;
                              
 list_param_call: list_param_call  ',' param_call{
-                                                    $$->parameters.push_back(*$3);
-                                                }
+                                    $$->parameters.push_back(*$3);
+                                    }
                | param_call {
-                                $$=new FunctionInfo;
-                                $$->parameters.push_back(*$1);
-                            }
+                         $$=new FunctionInfo;
+                         $$->parameters.push_back(*$1);
+                      }
                ;
 
-param_call: INT     { $$=new ParamInfo; $$->type="int";  }
-          | FLOAT   { $$=new ParamInfo; $$->type="float";}
-          | BOOL    { $$=new ParamInfo; $$->type="bool"; }
+param_call: INT     { $$=new ParamInfo; $$->type="int"; }
+          | FLOAT  { $$=new ParamInfo; $$->type="float"; }
+          | BOOL  { $$=new ParamInfo; $$->type="bool"; }
           | ID      { 
-                        if(!ids.existsVar($1)){string err="Variable '"+string($1)+"' was not declared!"; yyerror(err.c_str());}
-                        else {$$=new ParamInfo; $$->type=ids.TypeOf($1);}       
+            if(!ids.existsVar($1)){string err="Variable '"+string($1)+"' was not declared!"; yyerror(err.c_str());}
+            else {$$=new ParamInfo; $$->type=ids.TypeOf($1);}       
                     }
           ;
 
@@ -911,3 +873,5 @@ int main(int argc, char** argv)
      yyin=fopen(argv[1],"r");
      yyparse();
 } 
+
+
