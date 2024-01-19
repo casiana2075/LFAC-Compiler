@@ -12,21 +12,22 @@
 
 "begin_class"                        {return BGINCLASS;}
 "end_class"                          {return ENDCLASS;}
-"begin_main"                        {return BGINMAIN;}
-"end_main"                          {return ENDMAIN;}
+"begin_mainul"                        {return BGINMAIN;}
+"end_mainul"                          {return ENDMAIN;}
 "begin_global"                       {return BGINGLOBAL;}
 "end_global"                         {return ENDGLOBAL;}
 "begin_functions"                    {return BGINFUNC;}
 "end_functions"                      {return ENDFUNC;}
 
-"clasă"                              {return CLASS;}
+"clasul"                              {return CLASS;}
 
 "TypeOf"                             {return TYPEOF;}
 "Eval"                               {return EVAL;}
 
-"if"                                 {return IF;}
-"else"                               {return ELSE;}
-"while"                              {return WHILE;}
+"iful"                                 {return IF;}
+"elseul"                               {return ELSE;}
+"whileul"                              {return WHILE;}
+"forul"                              {return FOR;}  
 "tr"                               {yylval.bolean = true; return BOOL; }
 "fls"                              {yylval.bolean = false; return BOOL; }
 \"[0-9a-zA-Z ]*\"                    {yylval.string = strdup(yytext); return STRING; }
