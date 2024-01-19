@@ -1,5 +1,7 @@
-Function name: getter , Return type: int , Scope: getter
+Function name: getter , Return type: int , Scope: Point
 Parameters:
+type: int, name: z
+type: int, name: y
 
 Function name: getter , Return type: float , Scope: LFAC
 Parameters:
