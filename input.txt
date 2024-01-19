@@ -1,11 +1,11 @@
 begin_class
-    clasă Point{
+    clasul Point{
         int x;
         int y;
         int getter() { }
     }; 
 
-    clasă LFAC{
+    clasul LFAC{
         bool z;
         char y;
         float getter(int note) {
