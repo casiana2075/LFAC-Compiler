@@ -65,6 +65,8 @@ bool isBoolean(const std::string& str) {
 struct Node *nod;
 struct ParamInfo *parametru;
 struct FunctionInfo *functie;
+struct FunctionInfo *metoda; 
+
 }
 
 %token           BGINMAIN ENDMAIN ASSIGN BGINCLASS ENDCLASS CONST IF ELSE WHILE FOR BGINGLOBAL ENDGLOBAL BGINFUNC ENDFUNC EVAL
@@ -80,6 +82,10 @@ struct FunctionInfo *functie;
 %type<string> array_list
 %type<parametru> param param_call
 %type<functie> list_param list_param_call
+%type<metoda> list_param_class
+%type<parametru> param_class
+%type <num> nume
+
 
 %left OR
 %left AND
@@ -108,23 +114,46 @@ class_list :
                 | class_list clasa 
                 ;
 
-clasa: CLASS ID '{' list_class_fields methods'}' ';' 
+clasa: CLASS nume   '{' list_class_fields methods'}' ';' 
+
+nume: ID  { scope = $1 ;}
            ;
 
 list_class_fields :  list_class_fields param_class ';'
                    |
                    ; 
 
-param_class: TYPE ID
-           ;
+param_class: TYPE ID {
+    $$ = new ParamInfo;
+    $$->type = $1;
+    $$->name = $2;
+}
+;
 
-methods: TYPE ID '(' list_param_class ')' '{' list1 '}' ;     //int get_doors() { }
+list_param_class : param_class {
+   $$=new FunctionInfo;
+                         $$->parameters.push_back(*$1);
+                      }
+            | list_param ','  param {
+                                    $$->parameters.push_back(*$3);
+                                    }
+;
+
+methods: TYPE ID '(' list_param_class ')' '{' list1 '}' {
+    FunctionInfo funcInfo;
+    funcInfo.name = $2;
+    funcInfo.returnType = $1;
+    funcInfo.isMethod = !scope.empty(); // Aceasta este o metodă
+    funcInfo.className = scope; // Numele curent al clasei
+    funcInfo.parameters= $4->parameters;
+    funcInfo.parameters= $4->parameters;
+                    
+               
+    fs.addFunction(funcInfo);
+}    //int get_doors() { }
        |
        ;
        
-list_param_class : param_class
-                | list_param_class ',' param_class
-                ;
 
 global_variables:
                 | BGINGLOBAL global_variables_list ENDGLOBAL
@@ -161,6 +190,7 @@ decl_func  : TYPE ID '(' list_param ')' '{' list1 '}'      //int cmmdc(int param
                     FunctionInfo funcInfo;
                     funcInfo.name = $2;
                     funcInfo.returnType = $1;
+                    funcInfo.isMethod = scope.empty(); 
                     funcInfo.parameters= $4->parameters;
                     
                     fs.addFunction(funcInfo);
@@ -334,8 +364,9 @@ param_call: INT     { $$=new ParamInfo; $$->type="int"; }
 
 declarations:TYPE ID {   //int x; float y; bool z; char c; string str;
                         if(!ids.existsVar($2))   
-                            {    
-                                ids.addVar($1,$2,NULL,NULL,NULL,false);
+                            {   
+                               ids.addVar($1,$2,NULL,NULL,NULL,false);
+                             
                             }
                      }                   
             | TYPE ID '[' INT ']' ASSIGN '{' array_list '}' 
