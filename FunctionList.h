@@ -14,6 +14,8 @@ struct FunctionInfo
     string name;
     string returnType;
     string scope;
+    bool isMethod;
+    string className;
     vector<ParamInfo> parameters;
 };
 
