@@ -1,0 +1,27 @@
+Function name: getter , Return type: int , Scope: getter
+Parameters:
+
+Function name: getter , Return type: float , Scope: LFAC
+Parameters:
+type: int, name: note
+
+Function name: get , Return type: int , Scope: 
+Parameters:
+
+Function name: isNull , Return type: bool , Scope: GLOBAL
+Parameters:
+type: string, name: text
+
+Function name: average , Return type: float , Scope: GLOBAL
+Parameters:
+
+Function name: ceva , Return type: string , Scope: GLOBAL
+Parameters:
+type: bool, name: EsteCeva
+
+Function name: foo , Return type: int , Scope: GLOBAL
+Parameters:
+type: int, name: x
+type: float, name: y
+type: bool, name: ok
+
