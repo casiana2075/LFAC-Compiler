@@ -2,8 +2,19 @@ begin_class
     clasă Point{
         int x;
         int y;
-        int getter(int z) { }
-    };   
+        int getter() { }
+    }; 
+
+    clasă LFAC{
+        bool z;
+        char y;
+        float getter(int note) {
+            int media;
+            if( y <' x ){
+            y := x;
+            }
+        }
+    }; 
 end_class
 
 begin_global
@@ -13,11 +24,19 @@ begin_global
 end_global
 
 begin_functions
-    int get(int x) {
+    int get() {
 
     }
+    bool isNull(string text) {
 
-    int foo(int x,float y) {
+    }
+    float average(){
+
+    }
+    string ceva(bool EsteCeva){
+        
+    }
+    int foo(int x,float y, bool ok) {
         int z;
         char character;
         if( x <' y ){
@@ -34,7 +53,10 @@ begin_main
     float b;
     b := 2.3;
     Bool := fls;
-    foo (x, y);
+    int y;
+    Point punct;
+    foo (x, a, Bool);
+
 
     Eval( (10/2) + (4*2) - 1 );  
     TypeOf ( a + 101 );
