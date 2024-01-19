@@ -10,7 +10,7 @@ begin_class
         char y;
         float getter(int note) {
             int media;
-            if( y <' x ){
+            iful( y <' x ){
             y := x;
             }
         }
@@ -39,9 +39,9 @@ begin_functions
     int foo(int x,float y, bool ok) {
         int z;
         char character;
-        if( x <' y ){
+        iful( x <' y ){
             z := x;
-        }else {
+        }elseul {
             z := y;    
         }
     }
@@ -54,7 +54,6 @@ begin_main
     b := 2.3;
     Bool := fls;
     int y;
-    Point punct;
     foo (x, a, Bool);
 
 
@@ -62,15 +61,15 @@ begin_main
     TypeOf ( a + 101 );
     TypeOf ( Bool &&' tr );
 
-    if( a >' 2 ){
+    iful( a >' 2 ){
         Bool := tr;
     }
-    else {
+    elseul {
         Bool := fls;
     }
 
     forul ( i:= 1 ; i <=' 10 ; i+ ) {
-        while( Bool ){
+        whileul( Bool ){
             Bool := fls;
         }
      }
