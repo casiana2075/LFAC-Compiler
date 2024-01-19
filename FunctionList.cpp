@@ -21,10 +21,14 @@ FunctionInfo* FunctionList::getFunction(const char *name)
 
 void FunctionList::addFunction(FunctionInfo funcInfo)
 {
-    funcInfo.scope = "GLOBAL";
+    if (funcInfo.isMethod) {
+        funcInfo.scope = funcInfo.className; // Setează domeniul de aplicare la numele clasei pentru metode
+         
+    } else {
+        funcInfo.scope = "GLOBAL"; // Funcțiile globale au domeniul de aplicare GLOBAL
+    }
     functions.push_back(funcInfo);
 }
-
 bool FunctionList::existsFunction(const char *name)
 {
     string funcName = string(name);
@@ -47,10 +51,11 @@ void FunctionList::printFunctions()
         for (auto &func : functions)
         {
             file << "Function name: " << func.name << " , Return type: " << func.returnType << " "
-                 << ", Scope: " << func.scope<<", Parameters: ";
+                 << ", Scope: " << func.scope<<endl;
+                 file<<"Parameters:"<<endl;
             for (auto &param : func.parameters)
             {
-                file << "type: " << param.type << ", name: " << param.name;
+                file << "type: " << param.type << ", name: " << param.name<<endl;
             }
             file << endl;
         }
