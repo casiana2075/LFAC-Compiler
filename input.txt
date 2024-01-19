@@ -2,7 +2,7 @@ begin_class
     clasul Point{
         int x;
         int y;
-        int getter() { }
+        int getter(int z, int y) { }
     }; 
 
     clasul LFAC{
