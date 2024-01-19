@@ -5,6 +5,8 @@
 
 using namespace std;
 
+vector<ClassInstance> classInstances;
+
 FunctionInfo* FunctionList::getFunction(const char *name)
 {
     string funcName = string(name);
