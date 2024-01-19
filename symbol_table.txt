@@ -3,6 +3,7 @@ name: z type: float value: NULL funct: NULL class: NULL constant: 0
 name: Bool type: bool value: true funct: NULL class: NULL constant: 0
 name: a type: int value: 3 funct: NULL class: NULL constant: 1
 name: b type: float value: 2.300000 funct: NULL class: NULL constant: 0
+name: y type: int value: NULL funct: NULL class: NULL constant: 0
 name: arr[0] type: int value: 1 funct: NULL class: NULL constant: 0
 name: arr[1] type: int value: 45 funct: NULL class: NULL constant: 0
 name: arr[2] type: int value: 3 funct: NULL class: NULL constant: 0
